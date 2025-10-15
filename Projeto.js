@@ -1,4 +1,4 @@
-const supabaseUrl = 'https://ttkzahouerphmzzdopti.supabase.co';
+   const supabaseUrl = 'https://ttkzahouerphmzzdopti.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0a3phaG91ZXJwaG16emRvcHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk5NDcsImV4cCI6MjA3NTI2NTk0N30.fZHo98nT_i4qgxFqLH5VoyW1nlnS0Xm5N-C9-KnlVMQ';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
@@ -40,12 +40,11 @@ let gerentes = [];
 // ===============================
 formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+   
     const email = document.getElementById('email').value;
     const senha = document.getElementById('senha').value;
 
     try {
-        // Tentativa de login com Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: senha
@@ -58,11 +57,9 @@ formLogin.addEventListener('submit', async (e) => {
             mensagemLogin.textContent = "Login realizado com sucesso!";
             mensagemLogin.style.color = "green";
 
-            // Esconder login e mostrar dashboard
             loginPage.style.display = 'none';
             mainContainer.style.display = 'block';
 
-            // Inicializar dados do sistema
             await carregarDados();
             configurarEventListeners();
         }
@@ -73,12 +70,10 @@ formLogin.addEventListener('submit', async (e) => {
     }
 });
 
-
 // ===============================
 // CONFIGURAR EVENT LISTENERS
 // ===============================
 function configurarEventListeners() {
-    // Navegação entre abas
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -97,7 +92,6 @@ function configurarEventListeners() {
         });
     });
 
-    // Filtro por categoria de produtos
     produtoCategoriaTabs.forEach(tab => {
         tab.addEventListener('click', function() {
             const categoria = this.getAttribute('data-categoria');
@@ -107,18 +101,15 @@ function configurarEventListeners() {
         });
     });
 
-    // Modal de produto
     btnAdicionarProduto.addEventListener('click', () => abrirModalProduto());
     closeButtons.forEach(btn => btn.addEventListener('click', fecharModais));
     btnCancelarProduto.addEventListener('click', fecharModais);
     formProduto.addEventListener('submit', salvarProduto);
 
-    // Modal de movimentação
     btnNovaMovimentacao.addEventListener('click', () => abrirModalMovimentacao());
     btnCancelarMovimentacao.addEventListener('click', fecharModais);
     formMovimentacao.addEventListener('submit', registrarMovimentacao);
 
-    // Fechar modais ao clicar fora
     window.addEventListener('click', function(e) {
         if (e.target === modalProduto || e.target === modalMovimentacao) fecharModais();
     });
@@ -161,7 +152,6 @@ async function carregarProdutos() {
 
 function exibirProdutos(listaProdutos) {
     const container = document.getElementById('lista-produtos');
-
     if (listaProdutos.length === 0) {
         container.innerHTML = '<div class="alert-item">Nenhum produto encontrado</div>';
         return;
@@ -174,6 +164,7 @@ function exibirProdutos(listaProdutos) {
                 <th>Categoria</th>
                 <th>Quantidade</th>
                 <th>Preço</th>
+                <th>Fabricação</th>
                 <th>Validade</th>
                 <th>Status</th>
                 <th>Ações</th>
@@ -181,61 +172,68 @@ function exibirProdutos(listaProdutos) {
         </thead>
         <tbody>`;
 
-        const tbody = tabela.querySelector('tbody)');
+
+         const hoje = new Date();
+         const limiteVencido = new Date('2025-10-01'); 
+         const limiteProximoVencimento = new Date();
+         limiteProximoVencimento.setDate(hoje.getDate() + 60); // próximos aos 60 dias
 
     listaProdutos.forEach(produto => {
 
-        const hoje = new Date();
-        const validade = new Date(produto.validade);
+      
+        const validade = new Date(produto.validade); // função para data de validade do produto
+        const fabricacao = new Date(produto.fabricacao); // função para data de fabricação do produto
         const diasParaVencer = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
 
         let statusBadge = '';
-        if (produto.quantidade === 0) statusBadge = '<span class="badge badge-danger">Sem Estoque</span>';
-        else if (produto.quantidade < 10) statusBadge = '<span class="badge badge-warning">Baixo Estoque</span>';
-        else if (diasParaVencer <= 30) statusBadge = '<span class="badge badge-warning">Vencimento Próximo</span>';
-        else statusBadge = '<span class="badge badge-success">OK</span>';
 
-       true.innerHTML = `
+    if (produto.quantidade === 0) 
+        {
+        statusBadge = '<span class="badge badge-danger">Sem Estoque</span>';
+
+    } else if (validade < limiteVencido) 
+        
+        {
+        statusBadge = '<span class="badge badge-danger">Vencido</span>';
+
+    } else if (validade <= limiteProximoVencimento) 
+        
+        {
+        statusBadge = '<span class="badge badge-warning">Vencimento Próximo</span>';
+
+    } else if (produto.quantidade < 10) 
+        
+        {
+        statusBadge = '<span class="badge badge-warning">Baixo Estoque</span>';
+
+    } else {
+        statusBadge = '<span class="badge badge-success">OK</span>';
+    }
+     
+
+        html += `<tr>
             <td>${produto.nome} ${produto.controlado ? '<span class="badge badge-controlado">Controlado</span>' : ''}</td>
-
             <td><span class="badge badge-${produto.categoria.toLowerCase()}">${produto.categoria}</span></td>
-
             <td>${produto.quantidade}</td>
-
             <td>R$ ${produto.preco.toFixed(2)}</td>
-
+            <td>${produto.fabricacao ? new Date(produto.fabricacao).toLocaleDateString('pt-BR') : '-'}</td>
             <td>${validade.toLocaleDateString('pt-BR')}</td>
-
             <td>${statusBadge}</td>
-
             <td>
                 <button class="btn btn-primary btn-sm" onclick="editarProduto(${produto.id})">Editar</button>
                 <button class="btn btn-danger btn-sm" onclick="excluirProduto(${produto.id})">Excluir</button>
             </td>
-       `;
-
-        // Criar botões dinamicamente
-        const tdAcoes = tr.querySelector('td:last-child');
-
-        const btnEditar = document.createElement('button');
-        btnEditar.textContent = 'Editar';
-        btnEditar.classList.add('btn', 'btn-primary', 'btn-sm');
-        btnEditar.addEventListener('click', () => abrirModalProduto(produto));
-
-        const btnExcluir = document.createElement('button');
-        btnExcluir.textContent = 'Excluir';
-        btnExcluir.classList.add('btn', 'btn-danger', 'btn-sm');
-        btnExcluir.addEventListener('click', () => excluirProduto(produto.id));
-
-        tdAcoes.appendChild(btnEditar);
-        tdAcoes.appendChild(btnExcluir);
-
-        tbody.appendChild(tr);
+        </tr>`;
     });
 
-    container.appendChild(tabela);
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
+function filtrarProdutosPorCategoria(categoria) {
+    if (categoria === 'todos') exibirProdutos(produtos);
+    else exibirProdutos(produtos.filter(p => p.categoria === categoria));
+}
 
 // ===============================
 // FUNÇÕES DE MOVIMENTAÇÃO
@@ -322,12 +320,12 @@ function atualizarDashboard() {
     const hoje = new Date();
     const limite = new Date();
     limite.setDate(hoje.getDate() + 30);
+
     document.getElementById('proximo-vencimento').textContent = produtos.filter(p => {
         const validade = new Date(p.validade);
         return validade <= limite && validade >= hoje;
     }).length;
 
-    // Atualizar listas do dashboard
     exibirListaDashboard(produtos.filter(p => p.quantidade > 0 && p.quantidade < 10), 'baixo-estoque-list', 'Baixo Estoque');
     exibirListaDashboard(produtos.filter(p => {
         const validade = new Date(p.validade);
@@ -367,42 +365,31 @@ function carregarAlertas() {
     const hoje = new Date();
     const alertas = [];
 
-    // Função para criar data no horário local
-    function parseDataLocal(dataString) {
-        const d = new Date(dataString);
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    }
-
-    // Produtos vencidos
-    produtos.filter(p => parseDataLocal(p.validade) < hoje).forEach(p => {
-        const validade = parseDataLocal(p.validade);
+     // alerta de produto vencido
+    produtos.filter(p => new Date(p.validade) < hoje).forEach(p => {
         alertas.push({
             tipo: 'danger',
             titulo: 'Produto Vencido',
-            mensagem: `${p.nome} - Venceu em ${validade.toLocaleDateString('pt-BR')}`,
+            mensagem: `${p.nome} - Venceu em ${new Date(p.validade).toLocaleDateString('pt-BR')}`,
             produto: p
         });
     });
-
-    // Vencimento próximo (30 dias)
+         // alerta de vencimento próximo
     const limiteVencimento = new Date();
+
     limiteVencimento.setDate(hoje.getDate() + 30);
-
-    produtos.filter(p => {
-        const validade = parseDataLocal(p.validade);
-        return validade <= limiteVencimento && validade > hoje;
-    }).forEach(p => {
-        const validade = parseDataLocal(p.validade);
-        const dias = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
-        alertas.push({
-            tipo: 'warning',
-            titulo: 'Vencimento Próximo',
-            mensagem: `${p.nome} - Vence em ${dias} dias (${validade.toLocaleDateString('pt-BR')})`,
-            produto: p
+    produtos.filter(p => new Date(p.validade) <= limiteVencimento && new Date(p.validade) > hoje)
+        .forEach(p => {
+            const dias = Math.ceil((new Date(p.validade) - hoje) / (1000 * 60 * 60 * 24));
+            alertas.push({
+                tipo: 'warning',
+                titulo: 'Vencimento Próximo',
+                mensagem: `${p.nome} - Vence em ${dias} dias (${new Date(p.validade).toLocaleDateString('pt-BR')})`,
+                produto: p
+            });
         });
-    });
 
-    // Estoque baixo
+        //estoque baixo
     produtos.filter(p => p.quantidade > 0 && p.quantidade < 10).forEach(p => {
         alertas.push({
             tipo: 'warning',
@@ -411,8 +398,7 @@ function carregarAlertas() {
             produto: p
         });
     });
-
-    // Sem estoque
+        //sem estoque
     produtos.filter(p => p.quantidade === 0).forEach(p => {
         alertas.push({
             tipo: 'danger',
@@ -443,7 +429,6 @@ function carregarAlertas() {
     container.innerHTML = html;
 }
 
-
 // ===============================
 // MODAIS
 // ===============================
@@ -457,12 +442,13 @@ function abrirModalProduto(produto = null) {
         document.getElementById('produto-categoria').value = produto.categoria;
         document.getElementById('produto-quantidade').value = produto.quantidade;
         document.getElementById('produto-preco').value = produto.preco;
+        document.getElementById('produto-fabricacao').value = produto.fabricado;
         document.getElementById('produto-validade').value = produto.validade;
         document.getElementById('produto-controlado').checked = produto.controlado;
     } else {
         titulo.textContent = 'Adicionar Produto';
         formProduto.reset();
-        document.getElementById('produto-id').value = ''; //vai limpar o ID antigo
+        document.getElementById('produto-id').value = '';
         document.getElementById('produto-controlado').checked = false;
     }
 
@@ -504,6 +490,7 @@ async function salvarProduto(e) {
         categoria: document.getElementById('produto-categoria').value,
         quantidade: parseInt(document.getElementById('produto-quantidade').value),
         preco: parseFloat(document.getElementById('produto-preco').value),
+        fabricacao: document.getElementById('produto-fabricacao').value,
         validade: document.getElementById('produto-validade').value,
         controlado: document.getElementById('produto-controlado').checked
     };
@@ -539,20 +526,13 @@ async function registrarMovimentacao(e) {
         tipo: document.getElementById('movimentacao-tipo').value,
         quantidade: parseInt(document.getElementById('movimentacao-quantidade').value),
         motivo: document.getElementById('movimentacao-motivo').value,
-        gerente_id: 1 // depois pegar do login
+        gerente_id: 1, // Para teste, definir gerente fixo
+        data_movimentacao: new Date().toISOString()
     };
 
     try {
-        const { error: errorMov } = await supabase.from('movimentacao').insert([movimentacao]);
-        if (errorMov) throw errorMov;
-
-        const produto = produtos.find(p => p.id === movimentacao.produto_id);
-        let novaQuantidade = produto.quantidade;
-        novaQuantidade += movimentacao.tipo === 'entrada' ? movimentacao.quantidade : -movimentacao.quantidade;
-        if (novaQuantidade < 0) novaQuantidade = 0;
-
-        const { error: errorProd } = await supabase.from('produtos').update({ quantidade: novaQuantidade }).eq('id', movimentacao.produto_id);
-        if (errorProd) throw errorProd;
+        const { error } = await supabase.from('movimentacao').insert([movimentacao]);
+        if (error) throw error;
 
         fecharModais();
         carregarProdutos();
@@ -567,21 +547,19 @@ async function registrarMovimentacao(e) {
 }
 
 // ===============================
-// EDITAR E EXCLUIR PRODUTO
+// EDITAR / EXCLUIR PRODUTO
 // ===============================
 function editarProduto(id) {
     const produto = produtos.find(p => p.id === id);
-    if (produto) abrirModalProduto(produto);
+    abrirModalProduto(produto);
 }
 
 async function excluirProduto(id) {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
-
+    if (!confirm('Deseja realmente excluir este produto?')) return;
     try {
         const { error } = await supabase.from('produtos').delete().eq('id', id);
         if (error) throw error;
-
-        await carregarProdutos();
+        carregarProdutos();
         atualizarDashboard();
         carregarAlertas();
         alert('Produto excluído com sucesso!');
